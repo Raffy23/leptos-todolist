@@ -1,9 +1,15 @@
 #[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() {
+    use tracing_subscriber::{filter, fmt::format::FmtSpan};
+
     tracing_subscriber::fmt()
+        .with_env_filter(
+            filter::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "leptos_todolist=debug".into()),
+        )
         .with_level(true)
-        .with_max_level(tracing::Level::INFO)
+        .with_span_events(FmtSpan::CLOSE)
         .init();
 
     leptos_todolist::server::main().await

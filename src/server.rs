@@ -1,7 +1,7 @@
 use crate::app::*;
 use crate::auth::new_session_layer;
 use crate::database;
-use crate::repository::UserRepository;
+use crate::repository::{NoteRepository, UserRepository};
 use axum::Router;
 use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
@@ -13,6 +13,7 @@ use tracing::info;
 pub async fn main() {
     let db = database::create_pool().await;
     let user_repository = UserRepository::new(db.clone());
+    let notes_repository = NoteRepository::new(db.clone());
 
     // Routes from Leptos configuration
     let conf = get_configuration(None).unwrap();
@@ -29,9 +30,11 @@ pub async fn main() {
             routes,
             {
                 let user_repository = user_repository.clone();
+                let notes_repository = notes_repository.clone();
 
                 move || {
                     provide_context(user_repository.clone());
+                    provide_context(notes_repository.clone());
                 }
             },
             {
@@ -40,13 +43,14 @@ pub async fn main() {
                 move || shell(leptos_options.clone())
             },
         )
-        //.fallback(leptos_axum::file_and_error_handler(shell))
         .fallback(leptos_axum::file_and_error_handler_with_context(
             {
                 let user_repository = user_repository.clone();
+                let notes_repository = notes_repository.clone();
 
                 move || {
                     provide_context(user_repository.clone());
+                    provide_context(notes_repository.clone());
                 }
             },
             shell,

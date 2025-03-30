@@ -1,12 +1,17 @@
 use leptos::prelude::*;
 use leptos_meta::{provide_meta_context, MetaTags, Stylesheet, Title};
 use leptos_router::{
-    components::{Outlet, ParentRoute, ProtectedRoute, Redirect, Route, Router, Routes}, path, ParamSegment, PathSegment, StaticSegment, WildcardSegment
+    components::{ParentRoute, Route, Router, Routes},
+    ParamSegment, StaticSegment,
 };
 use thaw::ssr::SSRMountStyleProvider;
 use thaw::*;
 
-use crate::{components::RedirectToLogin, pages::{HomePage, LoginPage, NotFound}, provider::{is_logged_in, session::SessionProvider}};
+use crate::{
+    pages::{AppLayout, HomePage, LoginPage, NotFound, RegisterPage},
+    provider::UserProvider,
+    routes,
+};
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
@@ -40,22 +45,22 @@ pub fn App() -> impl IntoView {
             <Stylesheet id="leptos" href="/pkg/leptos-todolist.css" />
 
             // sets the document title
-            <Title text="TodoList" />
+            <Title text="Leptos ToDo-List" />
 
-            <SessionProvider>
+            <UserProvider>
                 <Router>
                     <main>
                         <Routes fallback=NotFound >
-                            <Route path=StaticSegment("") view=HomePage />
-                            <Route path=StaticSegment("/login") view=LoginPage />
-                            <ParentRoute path=StaticSegment("/notes") view=RedirectToLogin>
-                                <Route path=StaticSegment("") view=move || view! { <h2>"Notes"</h2> }/>
+                            <ParentRoute path=StaticSegment(routes::HOME) view=AppLayout>
+                                <Route path=StaticSegment("") view=HomePage />
                                 <Route path=ParamSegment("id") view=move || view! { <h2>"Note: - abc"</h2> }/>
                             </ParentRoute>
+                            <Route path=StaticSegment(routes::LOGIN) view=LoginPage />
+                            <Route path=StaticSegment(routes::REGISTER) view=RegisterPage />
                         </Routes>
                     </main>
                 </Router>
-            </SessionProvider>
+            </UserProvider>
         </ConfigProvider>
     }
 }

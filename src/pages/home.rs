@@ -1,67 +1,40 @@
-use leptos::{logging::log, prelude::*, reactive::graph::ReactiveNode, task::spawn_local};
-use leptos_router::{
-    components::{ParentRoute, ProtectedRoute, Route, A},
-    path,
-};
-use thaw::*;
+use crate::{components::{NewNoteForm, NotesOverview}, model::Note};
+use leptos::prelude::*;
 
-use crate::{model::Credentials, provider::use_session_user};
-use crate::provider::session::{Login, Logout};
+#[server(GetNotes)]
+#[tracing::instrument(name = "GetNotes", skip_all)]
+pub(crate) async fn get_notes() -> Result<Vec<Note>, ServerFnError> {
+    use crate::auth::AuthSession;
+    use crate::repository::NoteRepository;
+    use axum::http::StatusCode;
+    use leptos_axum::extract;
 
-#[server]
-pub(crate) async fn create_user() -> Result<String, ServerFnError> {
-    use crate::repository::UserRepository;
-    use password_auth::generate_hash;
+    let response_options = expect_context::<leptos_axum::ResponseOptions>();
+    let session: AuthSession = extract().await?;
 
-    let users = use_context::<UserRepository>().unwrap();
-    users.create("test", &generate_hash("test")).await.unwrap();
+    match session.user {
+        Some(user) => {
+            let notes_repository = expect_context::<NoteRepository>();
+            let notes = notes_repository.find_by_owner(user.id).await?;
 
-    Ok(format!("user test created"))
+            Ok(notes.into_iter().map(|note| note.to_note()).collect())
+        }
+        None => {
+            response_options.set_status(StatusCode::UNAUTHORIZED);
+            Err(ServerFnError::new("Unauthorized"))
+        }
+    }
 }
 
-/// Renders the home page of your application.
 #[component]
 pub(crate) fn HomePage() -> impl IntoView {
-    // Creates a reactive value to update the button
-    let count = RwSignal::new(0);
-    let on_click = move |_| *count.write() += 1;
-
-    let user_context = use_session_user();
+    let notes = Resource::new_blocking(
+        || (),
+        |_| async move { get_notes().await.unwrap_or_default() },
+    );
 
     view! {
-        <h1>"Welcome to Leptos!"</h1>
-
-        <Suspense fallback=|| view! { <p>"Loading \"/login\"..."</p> }>
-            <Show when=move || { user_context.read_value().user.get().is_some_and(|user| user.is_some())}>
-                <Button appearance=ButtonAppearance::Primary on:click=on_click>
-                    "Click Me: "
-                    {count}
-                </Button>
-            </Show>
-        </Suspense>
-
-        <A href="/protected">"Go to protected"</A>
-        <A href="/public">"Go to public"</A>
-
-        <div style="display:flex;gap:8px">
-            <Button
-                appearance=ButtonAppearance::Primary
-                on:click=move |_| { spawn_local(async { let _ = create_user().await; }); }
-            >
-                "create_user"
-            </Button>
-            <Button
-                appearance=ButtonAppearance::Primary
-                on:click=move |_| { user_context.read_value().login.dispatch(Login { username: "".to_owned(), password: "".to_owned() } ); }
-            >
-                "login"
-            </Button>
-            <Button
-                appearance=ButtonAppearance::Primary
-                on:click=move |_| { user_context.read_value().logout.dispatch(Logout {}); }
-            >
-                "logout"
-            </Button>
-        </div>
+        <NewNoteForm notes=notes/>
+        <NotesOverview notes=notes/>
     }
 }

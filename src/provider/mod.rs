@@ -1,18 +1,19 @@
-use leptos::{logging::log, prelude::*};
-use session::Session;
+use leptos::prelude::*;
+use user::RefreshUser;
 
-pub mod session;
+use crate::model::User;
+
+mod user;
+
+pub(crate) use user::UserProvider;
 
 #[inline]
-pub(crate) fn use_session_user() -> StoredValue<Session> {
-    expect_context::<StoredValue<Session>>()
+pub(crate) fn use_session_user() -> Resource<Option<User>> {
+    expect_context::<Resource<Option<User>>>()
 }
 
 #[inline]
-pub(crate) fn is_logged_in() -> bool {
-    use_session_user()
-        .read_value()
-        .user
-        .get()
-        .is_some_and(|user| user.is_some())
+pub(crate) fn refresh_user() {
+    expect_context::<WriteSignal<RefreshUser>>()
+        .set(RefreshUser);
 }

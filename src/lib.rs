@@ -13,6 +13,7 @@ pub(crate) mod components;
 pub(crate) mod model;
 pub(crate) mod pages;
 pub(crate) mod provider;
+pub(crate) mod routes;
 pub(crate) mod utils;
 
 #[cfg(feature = "hydrate")]

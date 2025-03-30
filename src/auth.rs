@@ -38,7 +38,7 @@ impl AuthBackend {
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
-    RepositoryError(#[from] repository::Error),
+    RepositoryError(#[from] repository::RepositoryError),
 
     #[error(transparent)]
     TaskJoin(#[from] task::JoinError),
@@ -50,6 +50,7 @@ impl AuthnBackend for AuthBackend {
     type Credentials = Credentials;
     type Error = Error;
 
+    #[tracing::instrument(skip_all)]
     async fn authenticate(
         &self,
         creds: Self::Credentials,
@@ -65,6 +66,7 @@ impl AuthnBackend for AuthBackend {
         .await?
     }
 
+    #[tracing::instrument(skip_all)]
     async fn get_user(&self, user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
         Ok(self
             .repository

@@ -2,20 +2,7 @@ html, body {
   margin: 0;
 }
 
-.login-background {
-  height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background-color:#EEE;
+main {
+  background-color: var(--colorNeutralBackground1, #fff);
 }
 
-.login-background .thaw-card {
-  max-width: 525px;
-}
-
-.login-from-button-bar {
-  display:flex;
-  justify-content:end;
-  margin-top:24px;
-}
