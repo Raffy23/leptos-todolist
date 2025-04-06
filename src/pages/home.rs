@@ -1,5 +1,7 @@
-use crate::{components::{NewNoteForm, NotesOverview}, model::Note};
+use crate::{components::{NewNoteDialog, NotesOverview}, model::Note};
 use leptos::prelude::*;
+use leptos_meta::Style;
+use thaw::*;
 
 #[server(GetNotes)]
 #[tracing::instrument(name = "GetNotes", skip_all)]
@@ -33,8 +35,32 @@ pub(crate) fn HomePage() -> impl IntoView {
         |_| async move { get_notes().await.unwrap_or_default() },
     );
 
+    let open = RwSignal::new(false);
+
     view! {
-        <NewNoteForm notes=notes/>
         <NotesOverview notes=notes/>
+        <NewNoteDialog notes=notes open=open />
+
+        <Style>
+            "
+            .home-page__notes-button {
+                position: fixed;
+                bottom: 32px;
+                right: 32px;
+                border-radius: 50%;
+                height: 96px;
+                width: 96px;
+                min-height: unset;
+                min-width: unset;
+            }
+            "
+        </Style>
+
+        <Button
+            class="home-page__notes-button"
+            appearance=ButtonAppearance::Primary
+            on_click=move |_| open.set(true)>
+            "New Note"
+        </Button>
     }
 }

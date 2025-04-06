@@ -35,13 +35,13 @@ impl NoteRepository {
     }
 
     #[instrument(skip(self))]
-    pub async fn delete(&self, id: NoteId) -> Result<(), RepositoryError> {
-        sqlx::query("DELETE FROM Notes WHERE id = ?")
+    pub async fn delete(&self, owner: UserId, id: NoteId) -> Result<u64, RepositoryError> {
+        Ok(sqlx::query("DELETE FROM Notes WHERE owner = ? AND id = ?")
+            .bind(owner)
             .bind(id)
             .execute(&self.db)
-            .await?;
-
-        Ok(())
+            .await?
+            .rows_affected())
     }
 
     #[instrument(skip(self))]

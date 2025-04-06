@@ -1,4 +1,5 @@
 use leptos::{ev, logging::log, prelude::*};
+use leptos_meta::Style;
 use thaw::*;
 
 use crate::model::Note;
@@ -33,14 +34,14 @@ pub(crate) async fn new_note(title: String, content: String) -> Result<Note, Ser
 }
 
 #[component]
-pub(crate) fn NewNoteForm(notes: Resource<Vec<Note>>) -> impl IntoView {
+pub(crate) fn NewNoteDialog(notes: Resource<Vec<Note>>, open: RwSignal<bool>) -> impl IntoView {
     let new_note_action = ServerAction::<NewNote>::new();
-    let (new_note, set_new_note) = signal(false);
+    let (_, set_new_note) = signal(false);
 
-    Effect::new(
-        move || {
+    Effect::new(move || {
         if let Some(Ok(note)) = new_note_action.value().get() {
             set_new_note.set(false);
+            open.set(false);
 
             match notes.get_untracked() {
                 Some(_) => {
@@ -56,27 +57,24 @@ pub(crate) fn NewNoteForm(notes: Resource<Vec<Note>>) -> impl IntoView {
     });
 
     view! {
-        <div>
-            <Show when=move || { !new_note.get() }>
-                <Flex>
-                    <Input
-                        placeholder="Add Note"
-                        input_type=InputType::Text
-                        on_focus=move |_| {
-                            set_new_note.set(true);
-                        }
-                        name="note"/>
-                </Flex>
-            </Show>
+        <Style>
+            "
+            .new-note-dialog__dialog-title {
+                padding-bottom: 32px;
+            }
+            .new-note-dialog__dialog-actions {
+                flex-direction: row-reverse;
+                padding-top: 32px;
+            }
+            "
+        </Style>
 
-            <Show when=move || { new_note.get() }>
+        <Dialog mask_closeable=true open>
+            <DialogSurface>
+                <DialogTitle class="new-note-dialog__dialog-title">"New Note"</DialogTitle>
                 <ActionForm action=new_note_action>
-                    <Card>
-                        <CardHeader>
-                            "New Note"
-                        </CardHeader>
-
-                        <FieldContextProvider>
+                    <FieldContextProvider>
+                        <DialogContent>
                             <Space vertical=true>
                                 <Field label="Title" name="title">
                                     <Input input_type=InputType::Text/>
@@ -88,26 +86,36 @@ pub(crate) fn NewNoteForm(notes: Resource<Vec<Note>>) -> impl IntoView {
                                         input_type=InputType::Text
                                         />
                                 </Field>
-
-                                <Button
-                                    appearance=ButtonAppearance::Subtle
-                                    button_type=ButtonType::Submit
-                                    on_click={
-                                        let field_context = FieldContextInjection::expect_context();
-                                        move |e: ev::MouseEvent| {
-                                            if !field_context.validate() {
-                                                e.prevent_default();
-                                            }
+                            </Space>
+                        </DialogContent>
+                        <DialogActions class="new-note-dialog__dialog-actions">
+                            <Button
+                                appearance=ButtonAppearance::Primary
+                                button_type=ButtonType::Submit
+                                on_click={
+                                    let field_context = FieldContextInjection::expect_context();
+                                    move |e: ev::MouseEvent| {
+                                        if !field_context.validate() {
+                                            e.prevent_default();
                                         }
                                     }
+                                }
                                 >
-                                    "Save"
-                                </Button>
-                            </Space>
-                        </FieldContextProvider>
-                    </Card>
+                                "Save"
+                            </Button>
+                            <Button
+                                appearance=ButtonAppearance::Secondary
+                                button_type=ButtonType::Button
+                                on_click=move |_| {
+                                    open.set(false);
+                                }
+                            >
+                                "Cancel"
+                            </Button>
+                        </DialogActions>
+                    </FieldContextProvider>
                 </ActionForm>
-            </Show>
-        </div>
+            </DialogSurface>
+        </Dialog>
     }
 }

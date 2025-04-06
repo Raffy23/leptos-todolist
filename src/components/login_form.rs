@@ -80,6 +80,7 @@ pub(crate) fn LoginForm() -> impl IntoView {
                 display:flex;
                 justify-content:end;
                 margin-top:24px;
+                gap:8px;
             }
             "
         </Style>
@@ -101,7 +102,7 @@ pub(crate) fn LoginForm() -> impl IntoView {
                     </Field>
 
                     <div class="login-from__button-bar">
-                        <A href="/register">
+                        <A attr:class="thaw-button thaw-button--rounded thaw-button--medium thaw-button--secondary" href="/register">
                             "Register"
                         </A>
                         <Button
