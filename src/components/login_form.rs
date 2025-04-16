@@ -1,4 +1,4 @@
-use leptos::{ev, logging::log, prelude::*};
+use leptos::{ev, prelude::*};
 use leptos_meta::Style;
 use leptos_router::components::A;
 use thaw::*;

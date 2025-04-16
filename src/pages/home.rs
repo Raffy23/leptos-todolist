@@ -1,11 +1,14 @@
-use crate::{components::{NewNoteDialog, NotesOverview}, model::Note};
+use crate::{
+    components::{NewNoteDialog, NotesOverview},
+    model::{Note, NoteDto},
+};
 use leptos::prelude::*;
 use leptos_meta::Style;
 use thaw::*;
 
 #[server(GetNotes)]
 #[tracing::instrument(name = "GetNotes", skip_all)]
-pub(crate) async fn get_notes() -> Result<Vec<Note>, ServerFnError> {
+pub(crate) async fn get_notes() -> Result<Vec<NoteDto>, ServerFnError> {
     use crate::auth::AuthSession;
     use crate::repository::NoteRepository;
     use axum::http::StatusCode;
@@ -19,7 +22,7 @@ pub(crate) async fn get_notes() -> Result<Vec<Note>, ServerFnError> {
             let notes_repository = expect_context::<NoteRepository>();
             let notes = notes_repository.find_by_owner(user.id).await?;
 
-            Ok(notes.into_iter().map(|note| note.to_note()).collect())
+            Ok(notes.into_iter().map(|note| note.to_dto()).collect())
         }
         None => {
             response_options.set_status(StatusCode::UNAUTHORIZED);
@@ -30,7 +33,7 @@ pub(crate) async fn get_notes() -> Result<Vec<Note>, ServerFnError> {
 
 #[component]
 pub(crate) fn HomePage() -> impl IntoView {
-    let notes = Resource::new_blocking(
+    let notes_resource = Resource::new_blocking(
         || (),
         |_| async move { get_notes().await.unwrap_or_default() },
     );
@@ -38,8 +41,8 @@ pub(crate) fn HomePage() -> impl IntoView {
     let open = RwSignal::new(false);
 
     view! {
-        <NotesOverview notes=notes/>
-        <NewNoteDialog notes=notes open=open />
+        <NotesOverview notes_resource=notes_resource/>
+        <NewNoteDialog notes=notes_resource open=open />
 
         <Style>
             "

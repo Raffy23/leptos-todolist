@@ -2,11 +2,11 @@ use leptos::{ev, logging::log, prelude::*};
 use leptos_meta::Style;
 use thaw::*;
 
-use crate::model::Note;
+use crate::model::NoteDto;
 
 #[server(NewNote)]
 #[tracing::instrument(name = "NewNote", skip_all)]
-pub(crate) async fn new_note(title: String, content: String) -> Result<Note, ServerFnError> {
+pub(crate) async fn new_note(title: String, content: String) -> Result<NoteDto, ServerFnError> {
     use crate::auth::AuthSession;
     use crate::repository::NoteRepository;
     use axum::http::StatusCode;
@@ -20,10 +20,11 @@ pub(crate) async fn new_note(title: String, content: String) -> Result<Note, Ser
         Some(user) => {
             let uuid = notes.create(user.id, &title, &content).await?;
 
-            Ok(Note {
+            Ok(NoteDto {
                 id: uuid,
                 title: title.clone(),
                 content: content.clone(),
+                checked: false,
             })
         }
         None => {
@@ -34,7 +35,7 @@ pub(crate) async fn new_note(title: String, content: String) -> Result<Note, Ser
 }
 
 #[component]
-pub(crate) fn NewNoteDialog(notes: Resource<Vec<Note>>, open: RwSignal<bool>) -> impl IntoView {
+pub(crate) fn NewNoteDialog(notes: Resource<Vec<NoteDto>>, open: RwSignal<bool>) -> impl IntoView {
     let new_note_action = ServerAction::<NewNote>::new();
     let (_, set_new_note) = signal(false);
 

@@ -23,11 +23,12 @@ impl NoteRepository {
     ) -> Result<NoteId, RepositoryError> {
         let uuid = NoteId::new_v4();
 
-        sqlx::query("INSERT INTO Notes (id, owner, title, content) VALUES (?, ?, ?, ?)")
+        sqlx::query("INSERT INTO Notes (id, owner, title, content, checked) VALUES (?, ?, ?, ?, ?)")
             .bind(uuid)
             .bind(owner)
             .bind(title)
             .bind(content)
+            .bind(false)
             .execute(&self.db)
             .await?;
 
@@ -58,5 +59,16 @@ impl NoteRepository {
             .bind(owner)
             .fetch_all(&self.db)
             .await?)
+    }
+
+    #[instrument(skip(self))]
+    pub async fn update_checked(&self, owner: UserId, id: NoteId, checked: bool) -> Result<u64, RepositoryError> {
+        Ok(sqlx::query("UPDATE Notes SET checked = ? WHERE owner = ? AND id = ?")
+            .bind(checked)
+            .bind(owner)
+            .bind(id)
+            .execute(&self.db)
+            .await?
+            .rows_affected())
     }
 }

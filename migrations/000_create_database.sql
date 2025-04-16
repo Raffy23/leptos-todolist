@@ -10,5 +10,6 @@ CREATE TABLE IF NOT EXISTS NOTES
     id          BLOB        PRIMARY KEY,
     owner       INTEGER     NOT NULL REFERENCES Users(id),
     title       TEXT        NOT NULL,
-    content     TEXT        NOT NULL
+    content     TEXT        NOT NULL,
+    checked     BOOLEAN     NOT NULL
 );
